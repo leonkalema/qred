@@ -1,0 +1,25 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply bg-gray-100 font-sans text-gray-800;
+}
+
+@layer components {
+  .card {
+    @apply bg-white rounded-lg shadow-md p-4 mb-4;
+  }
+  
+  .button-primary {
+    @apply bg-qred-primary text-white w-full py-3 font-medium rounded-md hover:bg-opacity-90 transition-all duration-200;
+  }
+  
+  .button-secondary {
+    @apply bg-gray-800 text-white w-full py-3 font-medium rounded-md hover:bg-opacity-90 transition-all duration-200;
+  }
+  
+  .section-header {
+    @apply text-gray-600 font-medium text-sm mb-2;
+  }
+}
