@@ -7,9 +7,6 @@ import ActionButtons from './components/ActionButtons';
 import ResponsiveWrapper from './components/ResponsiveWrapper';
 import { getUserData, getTransactions, getCards, getCardTransactions } from './services/api';
 
-// TODO: Add error boundary for better error handling
-// TODO: Add context for global state management when app grows
-
 function App() {
   const [userData, setUserData] = useState(null);
   const [transactions, setTransactions] = useState([]);
@@ -19,11 +16,9 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Load all app data from the API
   const fetchData = async () => {
     setLoading(true);
     
-    // Step 1: Load company data
     let companyData;
     try {
       companyData = await getUserData();
@@ -35,30 +30,24 @@ function App() {
       return;
     }
     
-    // Step 2: Get the company's cards
     let activeCard = null;
     try {
       const companyId = companyData.id || import.meta.env.VITE_COMPANY_ID;
       const cardsData = await getCards(companyId);
       
-      // Save what we found
       if (cardsData?.data) {
         setCards(cardsData.data);
         
-        // Find an active card if possible
         if (cardsData.data.length > 0) {
           activeCard = cardsData.data.find(c => c.status === 'ACTIVE') || cardsData.data[0];
         }
       }
     } catch (err) {
-      // Non-fatal error - continue with what we have
       console.warn(`Card data issue: ${err.message}`);
     }
     
-    // Step 3: Get transaction history
     let txData = { data: [], pagination: { total: 0 } };
     try {
-      // Get either card-specific or company-wide transactions
       if (activeCard?.id) {
         txData = await getCardTransactions(activeCard.id, 1, 5);
       } else {
@@ -68,28 +57,22 @@ function App() {
       setTransactions(txData.data || []);
       setTotalTransactions(txData.pagination?.total || 0);
     } catch (err) {
-      // Non-fatal error - continue with empty transactions
       console.warn(`Transaction loading error: ${err.message}`);
     }
     
-    // Step 4: Calculate spending info
     try {
       if (activeCard) {
-        // For active cards, calculate based on transactions
         const limit = Number(activeCard.spending_limit || 0);
         
-        // Get completed purchases only
         const purchases = txData.data?.filter(tx => 
           tx.status === 'COMPLETED' && tx.type === 'PURCHASE'
         ) || [];
         
-        // Sum up how much was spent
         let spent = 0;
         for (const purchase of purchases) {
           spent += Number(purchase.amount || 0);
         }
         
-        // Find remaining balance
         const remaining = Math.max(0, limit - spent);
         
         setSpendingInfo({
@@ -98,7 +81,6 @@ function App() {
           currency: activeCard.currency || 'kr'
         });
       } else if (companyData.spending || companyData.cardInfo) {
-        // Fallback to company overview data
         const spending = companyData.spending || companyData.cardInfo;
         setSpendingInfo({
           remaining: spending.remaining || 0,
@@ -110,22 +92,17 @@ function App() {
       console.warn(`Spending calculation error: ${err.message}`);
     }
     
-    // All done!
     setLoading(false);
   };
   
-  // Callback when a card is activated
   const handleCardActivated = () => {
-    // Reload everything when card status changes
     fetchData();
   };
 
   useEffect(() => {
-    // Fetch data on component mount
     fetchData();
   }, []);
 
-  // Loading state UI
   if (loading) {
     return (
       <ResponsiveWrapper>
@@ -139,7 +116,6 @@ function App() {
     );
   }
 
-  // Error state UI
   if (error) {
     return (
       <ResponsiveWrapper>
@@ -160,7 +136,6 @@ function App() {
     );
   }
 
-  // If we have data, render the app
   return (
     <ResponsiveWrapper>
       <Header companyName={userData?.name || userData?.company?.name} />
